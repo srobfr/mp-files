@@ -5,5 +5,12 @@
   "main": "index.js",
   "repository": "pi@home.srob.fr:/data/repos/mp-files.git",
   "author": "Simon Robert <srob@srob.fr>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "graceful-fs": "^4.1.11",
+    "mkdirp": "^0.5.1",
+    "mocha": "^3.2.0",
+    "q": "^1.4.1",
+    "tmp": "^0.0.31"
+  }
 }
