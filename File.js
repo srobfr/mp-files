@@ -2,6 +2,8 @@ const cp = require('child_process');
 const fs = require('graceful-fs');
 const Q = require('q');
 const tmp = require('tmp');
+const mkdirp = require('mkdirp');
+const Path = require('path');
 
 /**
  * This represents a file.
@@ -31,6 +33,31 @@ function File() {
     this.originalCode = null;
 
     /**
+     * Saves the file on disk if the content have been modified.
+     *
+     * Returns true if something have been saved, otherwise returns false.
+     *
+     * @returns {Promise.<boolean>}
+     */
+    this.save = function () {
+        if (that.code === that.originalCode) {
+            return Q(false); // Nothing changed.
+        }
+
+        // Try to create the parent folder.
+        const pMkdir = Q.nfcall(mkdirp, Path.dirname(that.path));
+
+        // Write the new content.
+        const pWrite = pMkdir.then(function () {
+            return Q.nfcall(fs.writeFile, that.path, that.code);
+        });
+
+        return pWrite.then(function () {
+            return true; // Something have been saved.
+        });
+    };
+
+    /**
      * Returns the universal diff.
      *
      * @param color {boolean} True to (try to) use colordiff.
@@ -42,29 +69,18 @@ function File() {
         if (that.code === that.originalCode) return Q("");
         color = (color === undefined ? true : color);
 
-        const codesToCompare = [that.originalCode, that.code];
+        const pTmpPath = Q.nfcall(tmp.tmpName);
 
-        // Create two stream files handlers to feed the diff utility.
-        const psTmpPaths = codesToCompare.map(function () {
-            return Q.nfcall(tmp.tmpName);
-        });
-
-        const pTmpPaths = Q.all(psTmpPaths);
-
-        // Open an write the file contents
-        const psWriteTmpFiles = psTmpPaths.map(function (pTmpPath, i) {
-            return pTmpPath.then(function (tmpPath) {
-                return Q.nfcall(fs.writeFile, tmpPath, codesToCompare[i]);
-            });
+        // Write the file contents
+        const pWrite = pTmpPath.then(function (tmpPath) {
+            return Q.nfcall(fs.writeFile, tmpPath, that.code);
         });
 
         // Run the diff process
-        const pDiff = Q.all([Q.all(psWriteTmpFiles), pTmpPaths]).spread(function (ignored, tmpPaths) {
-            const originalStreamPath = tmpPaths[0];
-            const streamPath = tmpPaths[1];
+        const pDiff = Q.all([pTmpPath, pWrite]).spread(function (tmpPath) {
             const diff = (color ? "colordiff" : "diff");
             const d = Q.defer();
-            const diffCp = cp.spawn(diff, ["-uN", originalStreamPath, streamPath]);
+            const diffCp = cp.spawn(diff, ["-uN", that.path, tmpPath]);
             let stderr = "", stdout = "";
             diffCp.stdout.on('data', function (data) {
                 stdout += data;
@@ -81,13 +97,11 @@ function File() {
             return d.promise;
         });
 
-        const pCleanup = Q.all([pDiff, pTmpPaths]).spread(function (ignored, tmpPaths) {
-            tmpPaths.map((path) => {
-                fs.unlink(path);
-            });
+        const pCleanup = Q.all([pTmpPath, pDiff]).spread(function (tmpPath) {
+            fs.unlink(tmpPath);
         });
 
-        return Q.all([pDiff, pCleanup]).spread(function(diff) {
+        return Q.all([pDiff, pCleanup]).spread(function (diff) {
             return diff;
         });
     };

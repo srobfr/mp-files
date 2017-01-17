@@ -6,12 +6,11 @@ const File = require(__dirname + "/File.js");
  * Loads a File from disk.
  *
  * @param {string} path The file path.
- * @param {object} options The options (optional)
  * @param {function|null} cb (optional)
  *
  * @return {Promise}
  */
-function loadFile(path, options, cb) {
+function loadFile(path, cb) {
     const file = new File();
     file.path = path;
 
