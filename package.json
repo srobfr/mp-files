@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Utility for automated (text) source code files editing",
   "main": "index.js",
-  "repository": "pi@home.srob.fr:/data/repos/mp-files.git",
+  "repository": "https://github.com/srobfr/mp-files.git",
   "author": "Simon Robert <srob@srob.fr>",
   "license": "MIT",
   "dependencies": {
