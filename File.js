@@ -97,9 +97,7 @@ function File() {
             return d.promise;
         });
 
-        const pCleanup = Q.all([pTmpPath, pDiff]).spread(function (tmpPath) {
-            fs.unlink(tmpPath);
-        });
+        const pCleanup = Q.all([pTmpPath, pDiff]).spread(tmpPath => Q.nfcall(fs.unlink, tmpPath));
 
         return Q.all([pDiff, pCleanup]).spread(function (diff) {
             return diff;
