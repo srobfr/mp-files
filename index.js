@@ -1,23 +1,27 @@
 const Q = require('q');
 const fs = require('graceful-fs');
 const File = require(__dirname + "/File.js");
+const iconv = require('iconv-lite');
 
 /**
  * Loads a File from disk.
  *
  * @param {string} path The file path.
+ * @param {string} encoding The file encoding. Defaults to UTF-8.
  * @param {function|null} cb (optional)
  *
  * @return {Promise}
  */
-function loadFile(path, cb) {
+function loadFile(path, encoding, cb) {
     const file = new File();
     file.path = path;
+    file.encoding = encoding || "UTF-8";
 
     // Load the file content (if it exists).
-    const pCode = Q.nfcall(fs.readFile, file.path, "UTF-8");
-    return pCode
-        .then(function (code) {
+    const pCodeBuffer = Q.nfcall(fs.readFile, file.path);
+    return pCodeBuffer
+        .then(function (codeBuffer) {
+            const code = iconv.decode(codeBuffer, file.encoding);
             file.code = file.originalCode = code;
             if (cb) cb(null, file);
             return file;

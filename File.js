@@ -4,6 +4,7 @@ const Q = require('q');
 const tmp = require('tmp');
 const mkdirp = require('mkdirp');
 const Path = require('path');
+const iconv = require('iconv-lite');
 
 /**
  * This represents a file.
@@ -18,6 +19,12 @@ function File() {
      * @type {string}
      */
     this.path = null;
+
+    /**
+     * The file encoding.
+     * @type {string}
+     */
+    this.encoding = null;
 
     /**
      * The file content (utf8 string).
@@ -49,7 +56,8 @@ function File() {
 
         // Write the new content.
         const pWrite = pMkdir.then(function () {
-            return Q.nfcall(fs.writeFile, that.path, that.code);
+            const encodedCode = iconv.encode(that.code, that.encoding);
+            return Q.nfcall(fs.writeFile, that.path, encodedCode);
         });
 
         return pWrite.then(function () {
@@ -73,7 +81,8 @@ function File() {
 
         // Write the file contents
         const pWrite = pTmpPath.then(function (tmpPath) {
-            return Q.nfcall(fs.writeFile, tmpPath, that.code);
+            const encodedCode = iconv.encode(that.code, that.encoding);
+            return Q.nfcall(fs.writeFile, tmpPath, encodedCode);
         });
 
         // Run the diff process
