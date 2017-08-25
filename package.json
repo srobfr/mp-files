@@ -1,6 +1,6 @@
 {
   "name": "mp-files",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Utility for automated (text) source code files editing",
   "main": "index.js",
   "repository": "https://github.com/srobfr/mp-files.git",
